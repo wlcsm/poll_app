@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -41,5 +42,8 @@ func ReturnResp(w http.ResponseWriter, data interface{}, err error, cod int) {
 	}
 
 	w.WriteHeader(cod)
-	w.Write([]byte(res))
+	_, err = w.Write([]byte(res))
+	if err != nil {
+		fmt.Printf("Error: %v", err)
+	}
 }

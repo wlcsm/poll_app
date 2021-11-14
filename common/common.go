@@ -28,3 +28,7 @@ type Question struct {
 	Id   int             `json:"id"`
 	Data interface{}     `json:"data"`
 }
+
+type SingleChoiceQuestion struct {
+	Header string `json:"header"`
+}

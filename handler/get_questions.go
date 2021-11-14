@@ -23,11 +23,7 @@ func GetPoll(w http.ResponseWriter, r *http.Request) {
 		ReturnErr(w, err, 1)
 	}
 
-	q := db.PollQuery{
-		PollId: 0,
-	}
-
-	poll, err := d.QueryPoll(q)
+	poll, err := d.QueryPoll(0)
 	if err != nil {
 		ReturnErr(w, err, 1)
 	}

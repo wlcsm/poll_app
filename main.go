@@ -10,7 +10,7 @@ import (
 func main() {
 
 	http.HandleFunc("/poll/", handler.GetPoll)
-	http.HandleFunc("/create/", handler.CreatePoll)
+	http.HandleFunc("/poll/create", handler.CreatePoll)
 	http.HandleFunc("/submit/", handler.SubmitPoll)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))

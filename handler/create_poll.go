@@ -16,8 +16,9 @@ type CreatePollRsp struct {
 }
 
 // CreatePoll Creates a poll
+// @Success 200 {object} CreatePollRsp
+// @Router /poll/create [POST]
 func CreatePoll(w http.ResponseWriter, r *http.Request) {
-
 	var req CreatePollReq
 	if err := ParseRequest(r, req); err != nil {
 		ReturnErr(w, err, 1)
@@ -28,14 +29,12 @@ func CreatePoll(w http.ResponseWriter, r *http.Request) {
 		ReturnErr(w, err, 1)
 	}
 
-	poll, err := d.UpdatePoll(
-		common.Poll{
-			Questions: []common.Question{{
-				Type: common.YesOrNo,
-				Id:   1,
-				Data: "his",
-			},
-			},
+	poll, err := d.CreatePoll(
+		[]common.Question{{
+			Type: common.YesOrNo,
+			Id:   1,
+			Data: "his",
+		},
 		})
 	if err != nil {
 		ReturnErr(w, err, 1)
