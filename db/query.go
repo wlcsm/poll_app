@@ -1,22 +1,27 @@
 package db
 
 import (
-	"github.com/poll_app/common"
-)
+	"fmt"
 
-// Mock database for now
+	"github.com/wlcsm/poll_app/common"
+)
 
 type DB interface {
 	QueryPoll(pollId int64) (*common.Poll, error)
 	CreatePoll(q []common.Question) (*common.Poll, error)
-	DeletePoll(pollId int64) (*common.Poll, error)
-	SubmitPoll(pollId int64, ans []common.Answer) error
+	UpdatePoll(pollId int64, q []common.Question) (*common.Poll, error)
+	DeletePoll(pollId int64) error
+	SubmitPoll(pollId int64, resp common.Response) error
 }
 
-var d mock
+// Mock database for now.
+var d = mock{
+	Polls: make(map[int64]common.Poll),
+}
 
 type mock struct {
-	Polls map[int64]common.Poll
+	Polls     map[int64]common.Poll
+	Responses map[int64][]common.Response
 }
 
 func GetConn() (DB, error) {
@@ -24,7 +29,7 @@ func GetConn() (DB, error) {
 }
 
 // QueryPoll
-// Query the poll
+// Query the poll.
 func (d *mock) QueryPoll(pollId int64) (*common.Poll, error) {
 	res, ok := d.Polls[pollId]
 	if !ok {
@@ -34,8 +39,8 @@ func (d *mock) QueryPoll(pollId int64) (*common.Poll, error) {
 	return &res, nil
 }
 
-// UpsertPoll
-// Insert the poll if it doesn't exist, update if it does
+// CreatePoll
+// Create the poll. Return an error if it already exists.
 func (d *mock) CreatePoll(q []common.Question) (*common.Poll, error) {
 	id := d.GetAnId(q)
 	if id == nil {
@@ -46,35 +51,60 @@ func (d *mock) CreatePoll(q []common.Question) (*common.Poll, error) {
 		Id:        *id,
 		Questions: q,
 	}
-
 	p := d.Polls[*id]
+
 	return &p, nil
 }
 
-// Get an available ID
+// UpdatePoll
+// Update the poll. Returns an error if it doesn't exist.
+func (d *mock) UpdatePoll(pollId int64, q []common.Question) (*common.Poll, error) {
+	p, ok := d.Polls[pollId]
+	if !ok {
+		return nil, NotFound
+	}
+
+	p.Questions = q
+	d.Polls[pollId] = p
+
+	return &p, nil
+}
+
+// DeletePoll
+// Delete the poll matching the PollQuery from the database.
+func (d *mock) DeletePoll(pollId int64) error {
+	delete(d.Polls, pollId)
+	return nil
+}
+
+// SubmitPoll
+// Submit a response to the poll.
+func (d *mock) SubmitPoll(pollId int64, resp common.Response) error {
+	_, ok := d.Polls[pollId]
+	if !ok {
+		return fmt.Errorf("submitting a response to a poll that doesn't exists: %w", NotFound)
+	}
+
+	res, ok := d.Responses[pollId]
+	if !ok {
+		res = []common.Response{}
+	}
+
+	res = append(res, resp)
+	d.Responses[pollId] = res
+
+	return nil
+}
+
+const MAX_DB = 10000
+
+// Get an available ID.
 func (d *mock) GetAnId(q []common.Question) *int64 {
-	for i := int64(0); i < 10000; i++ {
+	for i := int64(0); i < MAX_DB; i++ {
 		if _, ok := d.Polls[i]; !ok {
 			return &i
 		}
 	}
 
-	return nil
-}
-
-// DeletePoll
-// Delete the poll matching the PollQuery from the database
-func (d *mock) DeletePoll(pollId int64) (*common.Poll, error) {
-	return &common.Poll{
-		Questions: []common.Question{{
-			Type: common.YesOrNo,
-			Id:   1,
-			Data: "his",
-		}}}, nil
-}
-
-// SubmitPoll
-// Submit a response to the poll
-func (d *mock) SubmitPoll(pollId int64, ans []common.Answer) error {
 	return nil
 }

@@ -1,10 +1,11 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
 
-	"github.com/poll_app/common"
-	"github.com/poll_app/db"
+	"github.com/wlcsm/poll_app/common"
+	"github.com/wlcsm/poll_app/db"
 )
 
 type CreatePollReq struct {
@@ -17,28 +18,33 @@ type CreatePollRsp struct {
 
 // CreatePoll Creates a poll
 // @Success 200 {object} CreatePollRsp
-// @Router /poll/create [POST]
-func CreatePoll(w http.ResponseWriter, r *http.Request) {
+// @Router /poll/create [POST].
+func CreatePoll(r *http.Request) common.HTTPResponse {
 	var req CreatePollReq
-	if err := ParseRequest(r, req); err != nil {
-		ReturnErr(w, err, 1)
+
+	dec := json.NewDecoder(r.Body)
+	if err := dec.Decode(&req); err != nil {
+		return ErrResp(err)
 	}
 
 	d, err := db.GetConn()
 	if err != nil {
-		ReturnErr(w, err, 1)
+		return ErrResp(err)
 	}
 
-	poll, err := d.CreatePoll(
-		[]common.Question{{
+	q := []common.Question{
+		{
 			Type: common.YesOrNo,
 			Id:   1,
 			Data: "his",
 		},
-		})
-	if err != nil {
-		ReturnErr(w, err, 1)
 	}
 
-	ReturnResp(w, CreatePollRsp{poll.Id}, nil, 1)
+	poll, err := d.CreatePoll(q)
+	if err != nil {
+		return ErrResp(err)
+	}
+
+	data := CreatePollRsp{poll.Id}
+	return OkResp(data)
 }

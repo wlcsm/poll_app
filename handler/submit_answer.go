@@ -1,10 +1,13 @@
 package handler
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 
-	"github.com/poll_app/common"
-	"github.com/poll_app/db"
+	"github.com/wlcsm/poll_app/common"
+	"github.com/wlcsm/poll_app/db"
 )
 
 type SubmitPollReq struct {
@@ -12,19 +15,40 @@ type SubmitPollReq struct {
 	Answers []common.Answer `json:"answers"`
 }
 
-// SubmitPoll Submit the answers for a poll
-func SubmitPoll(w http.ResponseWriter, r *http.Request) {
+type SubmitPollRsp struct {
+}
+
+// SubmitPoll Submit the answers for a poll.
+func SubmitPoll(r *http.Request) common.HTTPResponse {
 	var req SubmitPollReq
-	if err := ParseRequest(r, req); err != nil {
-		ReturnErr(w, err, 1)
+
+	dec := json.NewDecoder(r.Body)
+	if err := dec.Decode(&req); err != nil {
+		return ErrResp(err)
 	}
+
+	resp := common.Response{Answers: req.Answers}
 
 	d, err := db.GetConn()
 	if err != nil {
-		ReturnErr(w, err, 1)
+		return ErrResp(err)
 	}
 
-	if err := d.SubmitPoll(req.PollId, req.Answers); err != nil {
-		ReturnErr(w, err, 1)
+	if err := d.SubmitPoll(req.PollId, resp); err != nil {
+		fmt.Println(err)
+
+		var code int
+		if errors.Is(err, db.NotFound) {
+			code = 404
+		} else {
+			code = 500
+		}
+
+		return common.HTTPResponse{
+			Code: code,
+			Err:  err,
+		}
 	}
+
+	return OkResp(SubmitPollRsp{})
 }

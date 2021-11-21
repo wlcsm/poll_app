@@ -3,7 +3,7 @@ package common
 type QuestionOptions int
 
 const (
-	Multichoice QuestionOptions = iota
+	MultiChoice QuestionOptions = iota
 	SingleChoice
 	YesOrNo
 	FreeText
@@ -14,21 +14,28 @@ type Poll struct {
 	Questions []Question `json:"questions"`
 }
 
-type PollResponse struct {
-	Answers []Answer `json:"answer"`
+type Response struct {
+	Responder string
+	Answers   []Answer `json:"answers"`
 }
 
 type Answer struct {
-	Id   int         `json:"id"`
+	Id   int64       `json:"id"`
 	Data interface{} `json:"data"`
 }
 
 type Question struct {
 	Type QuestionOptions `json:"type"`
-	Id   int             `json:"id"`
+	Id   int64           `json:"id"`
 	Data interface{}     `json:"data"`
 }
 
 type SingleChoiceQuestion struct {
 	Header string `json:"header"`
+}
+
+type HTTPResponse struct {
+	Code int
+	Data interface{}
+	Err  error
 }
